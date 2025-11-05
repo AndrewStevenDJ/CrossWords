@@ -81,7 +81,7 @@ final categoriesProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CategoriesRef = AutoDisposeFutureProviderRef<List<WordCategory>>;
-String _$categoryWordListHash() => r'0cc28d749e71e694ec4d09f88c894e0ab5cc5865';
+String _$categoryWordListHash() => r'f0ee1a1ff11485ad588cdbe77b18294f79335588';
 
 /// Provider modificado del wordList que considera la categoría seleccionada
 ///
@@ -101,6 +101,165 @@ final categoryWordListProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CategoryWordListRef = AutoDisposeFutureProviderRef<BuiltSet<String>>;
+String _$leaderboardHash() => r'3cdc8f54a3f91649b4e2276f492f172891a45069';
+
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+/// See also [leaderboard].
+@ProviderFor(leaderboard)
+const leaderboardProvider = LeaderboardFamily();
+
+/// See also [leaderboard].
+class LeaderboardFamily extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [leaderboard].
+  const LeaderboardFamily();
+
+  /// See also [leaderboard].
+  LeaderboardProvider call({int limit = 10, String? categoryId}) {
+    return LeaderboardProvider(limit: limit, categoryId: categoryId);
+  }
+
+  @override
+  LeaderboardProvider getProviderOverride(
+    covariant LeaderboardProvider provider,
+  ) {
+    return call(limit: provider.limit, categoryId: provider.categoryId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'leaderboardProvider';
+}
+
+/// See also [leaderboard].
+class LeaderboardProvider
+    extends AutoDisposeFutureProvider<List<Map<String, dynamic>>> {
+  /// See also [leaderboard].
+  LeaderboardProvider({int limit = 10, String? categoryId})
+    : this._internal(
+        (ref) => leaderboard(
+          ref as LeaderboardRef,
+          limit: limit,
+          categoryId: categoryId,
+        ),
+        from: leaderboardProvider,
+        name: r'leaderboardProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$leaderboardHash,
+        dependencies: LeaderboardFamily._dependencies,
+        allTransitiveDependencies: LeaderboardFamily._allTransitiveDependencies,
+        limit: limit,
+        categoryId: categoryId,
+      );
+
+  LeaderboardProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.limit,
+    required this.categoryId,
+  }) : super.internal();
+
+  final int limit;
+  final String? categoryId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Map<String, dynamic>>> Function(LeaderboardRef provider)
+    create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: LeaderboardProvider._internal(
+        (ref) => create(ref as LeaderboardRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        limit: limit,
+        categoryId: categoryId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Map<String, dynamic>>> createElement() {
+    return _LeaderboardProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LeaderboardProvider &&
+        other.limit == limit &&
+        other.categoryId == categoryId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, limit.hashCode);
+    hash = _SystemHash.combine(hash, categoryId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin LeaderboardRef
+    on AutoDisposeFutureProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `limit` of this provider.
+  int get limit;
+
+  /// The parameter `categoryId` of this provider.
+  String? get categoryId;
+}
+
+class _LeaderboardProviderElement
+    extends AutoDisposeFutureProviderElement<List<Map<String, dynamic>>>
+    with LeaderboardRef {
+  _LeaderboardProviderElement(super.provider);
+
+  @override
+  int get limit => (origin as LeaderboardProvider).limit;
+  @override
+  String? get categoryId => (origin as LeaderboardProvider).categoryId;
+}
+
 String _$sizeHash() => r'6ece68b4e628680963f11e0885d044cfa64b18fc';
 
 /// A provider that holds the current size of the crossword to generate.
@@ -118,7 +277,7 @@ final sizeProvider = NotifierProvider<Size, CrosswordSize>.internal(
 );
 
 typedef _$Size = Notifier<CrosswordSize>;
-String _$puzzleHash() => r'4d88f30d8ab58e84099913c73628ba5d2e8f4ca0';
+String _$puzzleHash() => r'48dd9d9fa4fa37a94f5b64f718eb5fce834fa015';
 
 /// See also [Puzzle].
 @ProviderFor(Puzzle)
@@ -152,5 +311,40 @@ final selectedCategoryProvider =
     );
 
 typedef _$SelectedCategory = Notifier<WordCategory?>;
+String _$gameScoreNotifierHash() => r'395d19f8ce5a1a274597f9fafdd58dd92aeb1cf6';
+
+/// Provider para manejar el sistema de puntaje
+///
+/// Copied from [GameScoreNotifier].
+@ProviderFor(GameScoreNotifier)
+final gameScoreNotifierProvider =
+    NotifierProvider<GameScoreNotifier, Map<String, dynamic>>.internal(
+      GameScoreNotifier.new,
+      name: r'gameScoreNotifierProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$gameScoreNotifierHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$GameScoreNotifier = Notifier<Map<String, dynamic>>;
+String _$gameStartedHash() => r'195fa63406c88f84a65986cf2497a6f7bda82ac2';
+
+/// Provider para controlar si el juego ha comenzado
+///
+/// Copied from [GameStarted].
+@ProviderFor(GameStarted)
+final gameStartedProvider = NotifierProvider<GameStarted, bool>.internal(
+  GameStarted.new,
+  name: r'gameStartedProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$gameStartedHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$GameStarted = Notifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

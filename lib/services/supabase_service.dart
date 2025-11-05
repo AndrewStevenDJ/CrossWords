@@ -91,4 +91,90 @@ class SupabaseService {
       return [];
     }
   }
+
+  /// Guarda un puntaje en Supabase
+  static Future<bool> saveScore({
+    required Map<String, dynamic> scoreData,
+    String? playerName,
+  }) async {
+    try {
+      await client.from('game_scores').insert({
+        ...scoreData,
+        if (playerName != null) 'player_name': playerName,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+      return true;
+    } catch (e) {
+      print('Error guardando puntaje: $e');
+      return false;
+    }
+  }
+
+  /// Obtiene los mejores puntajes (leaderboard)
+  static Future<List<Map<String, dynamic>>> getTopScores({
+    int limit = 10,
+    String? categoryId,
+  }) async {
+    try {
+      var query = client
+          .from('game_scores')
+          .select('*, word_categories(name_es)');
+
+      if (categoryId != null) {
+        query = query.eq('category_id', categoryId);
+      }
+
+      final response = await query
+          .order('total_points', ascending: false)
+          .limit(limit);
+
+      // Transformar la respuesta para incluir el nombre de categoría
+      final scores = List<Map<String, dynamic>>.from(response);
+      return scores.map((score) {
+        final categoryData = score['word_categories'];
+        return {
+          ...score,
+          'category_name': categoryData != null ? categoryData['name_es'] : null,
+        };
+      }).toList();
+    } catch (e) {
+      print('Error obteniendo mejores puntajes: $e');
+      print('Detalles del error: ${e.toString()}');
+      return [];
+    }
+  }
+
+  /// Obtiene el historial de puntajes de un jugador
+  static Future<List<Map<String, dynamic>>> getPlayerScores(
+    String playerName, {
+    int limit = 20,
+  }) async {
+    try {
+      final response = await client
+          .from('game_scores')
+          .select()
+          .eq('player_name', playerName)
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error obteniendo puntajes del jugador: $e');
+      return [];
+    }
+  }
+
+  /// Obtiene estadísticas generales de un jugador
+  static Future<Map<String, dynamic>?> getPlayerStats(String playerName) async {
+    try {
+      final response = await client.rpc('get_player_stats', params: {
+        'p_player_name': playerName,
+      });
+
+      return response as Map<String, dynamic>?;
+    } catch (e) {
+      print('Error obteniendo estadísticas del jugador: $e');
+      return null;
+    }
+  }
 }

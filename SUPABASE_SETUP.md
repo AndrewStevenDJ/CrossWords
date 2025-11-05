@@ -96,6 +96,67 @@ CREATE INDEX idx_saved_crosswords_category
 ON saved_crosswords(category_id, created_at DESC);
 ```
 
+### Tabla: `game_scores`
+
+```sql
+-- Crear tabla para guardar puntajes de jugadores
+CREATE TABLE game_scores (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  player_name TEXT,
+  total_points INTEGER NOT NULL DEFAULT 0,
+  correct_words INTEGER NOT NULL DEFAULT 0,
+  wrong_attempts INTEGER NOT NULL DEFAULT 0,
+  time_elapsed INTEGER,
+  found_words TEXT[] NOT NULL,
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time TIMESTAMP WITH TIME ZONE,
+  category_id UUID REFERENCES word_categories(id) ON DELETE SET NULL,
+  category_name TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Habilitar Row Level Security
+ALTER TABLE game_scores ENABLE ROW LEVEL SECURITY;
+
+-- Política para permitir lectura a todos
+CREATE POLICY "Allow public read access" 
+ON game_scores FOR SELECT 
+TO public 
+USING (true);
+
+-- Política para permitir inserción a todos
+CREATE POLICY "Allow public insert access" 
+ON game_scores FOR INSERT 
+TO public 
+WITH CHECK (true);
+
+-- Índices para mejorar consultas
+CREATE INDEX idx_game_scores_total_points 
+ON game_scores(total_points DESC);
+
+CREATE INDEX idx_game_scores_player 
+ON game_scores(player_name, created_at DESC);
+
+CREATE INDEX idx_game_scores_category 
+ON game_scores(category_id, total_points DESC);
+
+-- Función para obtener estadísticas del jugador
+CREATE OR REPLACE FUNCTION get_player_stats(p_player_name TEXT)
+RETURNS JSON AS $$
+SELECT json_build_object(
+  'total_games', COUNT(*),
+  'total_points', SUM(total_points),
+  'average_points', AVG(total_points),
+  'best_score', MAX(total_points),
+  'total_correct_words', SUM(correct_words),
+  'total_wrong_attempts', SUM(wrong_attempts),
+  'average_time', AVG(time_elapsed)
+)
+FROM game_scores
+WHERE player_name = p_player_name;
+$$ LANGUAGE SQL STABLE;
+```
+
 ## 4. Probar la conexión
 
 1. Ejecuta la app

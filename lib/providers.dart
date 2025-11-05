@@ -228,7 +228,156 @@ Future<BuiltSet<String>> categoryWordList(CategoryWordListRef ref) async {
     return selectedCategory.words;
   }
   
-  // Si no, usar la lista de palabras por defecto
-  return await ref.watch(wordListProvider.future);
+  // Si no, usar el wordList por defecto
+  return ref.watch(wordListProvider.future);
 }
 
+/// Provider para manejar el sistema de puntaje
+@Riverpod(keepAlive: true)
+class GameScoreNotifier extends _$GameScoreNotifier {
+  int _totalPoints = 0;
+  int _correctWords = 0;
+  int _wrongAttempts = 0;
+  DateTime? _startTime;
+  DateTime? _endTime;
+  List<String> _foundWords = [];
+  String? _categoryId;
+  String? _categoryName;
+
+  @override
+  Map<String, dynamic> build() {
+    return {
+      'totalPoints': _totalPoints,
+      'correctWords': _correctWords,
+      'wrongAttempts': _wrongAttempts,
+      'startTime': _startTime,
+      'endTime': _endTime,
+      'foundWords': _foundWords,
+      'categoryId': _categoryId,
+      'categoryName': _categoryName,
+      'timeElapsed': _timeElapsed,
+    };
+  }
+
+  int? get _timeElapsed {
+    if (_startTime == null) return null;
+    final endTime = _endTime ?? DateTime.now();
+    return endTime.difference(_startTime!).inSeconds;
+  }
+
+  void startGame({String? categoryId, String? categoryName}) {
+    _totalPoints = 0;
+    _correctWords = 0;
+    _wrongAttempts = 0;
+    _startTime = DateTime.now();
+    _endTime = null;
+    _foundWords = [];
+    _categoryId = categoryId;
+    _categoryName = categoryName;
+    ref.invalidateSelf();
+  }
+
+  void resetGame() {
+    _totalPoints = 0;
+    _correctWords = 0;
+    _wrongAttempts = 0;
+    _startTime = null;
+    _endTime = null;
+    _foundWords = [];
+    _categoryId = null;
+    _categoryName = null;
+    ref.invalidateSelf();
+  }
+
+  void addCorrectWord(String word) {
+    if (_foundWords.contains(word)) return;
+    _foundWords.add(word);
+    _correctWords++;
+    final points = _calculatePointsForWord(word);
+    _totalPoints += points;
+    ref.invalidateSelf();
+  }
+
+  void addWrongAttempt() {
+    _wrongAttempts++;
+    _totalPoints = (_totalPoints - 5).clamp(0, double.infinity).toInt();
+    ref.invalidateSelf();
+  }
+
+  void completeGame() {
+    if (_endTime != null) return;
+    _endTime = DateTime.now();
+    _totalPoints += 200;
+    final timeElapsed = _timeElapsed ?? 0;
+    if (timeElapsed < 600) {
+      final minutesSaved = (600 - timeElapsed) ~/ 60;
+      _totalPoints += minutesSaved * 20;
+    }
+    ref.invalidateSelf();
+  }
+
+  int _calculatePointsForWord(String word) {
+    final length = word.length;
+    if (length <= 3) return 10;
+    if (length <= 5) return 20;
+    if (length <= 7) return 30;
+    if (length <= 9) return 50;
+    return 75;
+  }
+
+  Future<bool> saveScore({String? playerName}) async {
+    if (_endTime == null) completeGame();
+    try {
+      final scoreData = {
+        'total_points': _totalPoints,
+        'correct_words': _correctWords,
+        'wrong_attempts': _wrongAttempts,
+        'time_elapsed': _timeElapsed,
+        'found_words': _foundWords,
+        'start_time': _startTime?.toIso8601String(),
+        'end_time': _endTime?.toIso8601String(),
+        'category_id': _categoryId,
+        'category_name': _categoryName,
+      };
+      return await SupabaseService.saveScore(scoreData: scoreData, playerName: playerName);
+    } catch (e) {
+      debugPrint('Error saving score: $e');
+      return false;
+    }
+  }
+
+  String getScoreSummary() {
+    return 'Puntaje Total: $_totalPoints puntos\nPalabras Correctas: $_correctWords\nIntentos Incorrectos: $_wrongAttempts\nTiempo: ${_formatTime(_timeElapsed ?? 0)}';
+  }
+
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '$minutes:${secs.toString().padLeft(2, '0')}';
+  }
+}
+
+@riverpod
+Future<List<Map<String, dynamic>>> leaderboard(LeaderboardRef ref, {int limit = 10, String? categoryId}) async {
+  try {
+    return await SupabaseService.getTopScores(limit: limit, categoryId: categoryId);
+  } catch (e) {
+    debugPrint('Error loading leaderboard: $e');
+    return [];
+  }
+}
+
+/// Provider para controlar si el juego ha comenzado
+@Riverpod(keepAlive: true)
+class GameStarted extends _$GameStarted {
+  @override
+  bool build() => false;
+
+  void startGame() {
+    state = true;
+  }
+
+  void resetGame() {
+    state = false;
+  }
+}

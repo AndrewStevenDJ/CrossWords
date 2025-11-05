@@ -22,6 +22,47 @@ class CrosswordPuzzleWidget extends ConsumerWidget {
     );
   }
 
+  void _handleWordSelection(
+    WidgetRef ref,
+    Location location,
+    String word,
+    Direction direction,
+  ) {
+    final puzzle = ref.read(puzzleProvider);
+    final notifier = ref.read(puzzleProvider.notifier);
+    final scoreNotifier = ref.read(gameScoreNotifierProvider.notifier);
+    
+    // Verificar si la palabra ya estaba seleccionada
+    final wasSelected = puzzle.selectedWords.any(
+      (w) => w.word == word && 
+             w.location == location && 
+             w.direction == direction,
+    );
+    
+    // Solo registrar puntaje si se está seleccionando (no deseleccionando)
+    if (!wasSelected) {
+      // Verificar si es una palabra correcta del crucigrama original
+      final isCorrectWord = puzzle.crossword.words.any(
+        (w) => w.word == word && 
+               w.location == location && 
+               w.direction == direction,
+      );
+      
+      if (isCorrectWord) {
+        scoreNotifier.addCorrectWord(word);
+      } else {
+        scoreNotifier.addWrongAttempt();
+      }
+    }
+    
+    // Seleccionar/deseleccionar palabra
+    notifier.selectWord(
+      location: location,
+      word: word,
+      direction: direction,
+    );
+  }
+
   TableViewCell _buildCell(BuildContext context, TableVicinity vicinity) {
     final location = Location.at(vicinity.column, vicinity.row);
 
@@ -108,6 +149,12 @@ class CrosswordPuzzleWidget extends ConsumerWidget {
                     word: word,
                     selectedCharacter: selectedCharacter,
                     direction: Direction.across,
+                    onSelectWord: () => _handleWordSelection(
+                      ref,
+                      acrossWord.location,
+                      word,
+                      Direction.across,
+                    ),
                   ),
                 if (acrossWords.isNotEmpty && downWords.isNotEmpty)
                   Padding(
@@ -120,6 +167,12 @@ class CrosswordPuzzleWidget extends ConsumerWidget {
                     word: word,
                     selectedCharacter: selectedCharacter,
                     direction: Direction.down,
+                    onSelectWord: () => _handleWordSelection(
+                      ref,
+                      downWord.location,
+                      word,
+                      Direction.down,
+                    ),
                   ),
               ],
             );
@@ -156,33 +209,29 @@ class _WordSelectMenuItem extends ConsumerWidget {
     required this.word,
     required this.selectedCharacter,
     required this.direction,
+    required this.onSelectWord,
   });
 
   final Location location;
   final String word;
   final CrosswordCharacter? selectedCharacter;
   final Direction direction;
+  final VoidCallback onSelectWord;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(puzzleProvider.notifier);
+    final canSelect = ref.watch(
+      puzzleProvider.select(
+        (puzzle) => puzzle.canSelectWord(
+          location: location,
+          word: word,
+          direction: direction,
+        ),
+      ),
+    );
+
     return MenuItemButton(
-      onPressed:
-          ref.watch(
-            puzzleProvider.select(
-              (puzzle) => puzzle.canSelectWord(
-                location: location,
-                word: word,
-                direction: direction,
-              ),
-            ),
-          )
-          ? () => notifier.selectWord(
-              location: location,
-              word: word,
-              direction: direction,
-            )
-          : null,
+      onPressed: canSelect ? onSelectWord : null,
       leadingIcon:
           switch (direction) {
             Direction.across => selectedCharacter?.acrossWord?.word == word,
