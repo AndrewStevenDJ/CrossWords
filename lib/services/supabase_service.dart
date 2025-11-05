@@ -1,9 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/category.dart';
 
 class SupabaseService {
-  static const String supabaseUrl = 'https://vespnopipzsllnvbnzbq.supabase.co';
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlc3Bub3BpcHpzbGxudmJuemJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NjI5NDEsImV4cCI6MjA3NzMzODk0MX0.2ddxfqlmdivgti8hXw5e6mQR5Avg5CRZjaia7pbePtk';
+  // Las credenciales ahora se cargan desde el archivo .env
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   static SupabaseClient? _client;
 
@@ -15,6 +17,13 @@ class SupabaseService {
   }
 
   static Future<void> initialize() async {
+    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+      throw Exception(
+        'Las credenciales de Supabase no están configuradas. '
+        'Asegúrate de tener un archivo .env con SUPABASE_URL y SUPABASE_ANON_KEY.'
+      );
+    }
+    
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
