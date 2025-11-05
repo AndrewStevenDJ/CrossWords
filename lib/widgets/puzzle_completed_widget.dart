@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers.dart';
+import '../services/audio_service.dart';
 
 class PuzzleCompletedWidget extends ConsumerStatefulWidget {
   const PuzzleCompletedWidget({super.key});
@@ -18,6 +19,9 @@ class _PuzzleCompletedWidgetState extends ConsumerState<PuzzleCompletedWidget> {
   @override
   void initState() {
     super.initState();
+    // Reproducir sonido de victoria
+    AudioService().playVictorySound();
+    
     // Completar el juego automáticamente cuando se muestra este widget
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(gameScoreNotifierProvider.notifier).completeGame();
@@ -274,6 +278,12 @@ class _PuzzleCompletedWidgetState extends ConsumerState<PuzzleCompletedWidget> {
   }
 
   void _newGame() {
+    // Sonido de clic
+    AudioService().playButtonClick();
+    
+    // Volver a música del lobby
+    AudioService().playLobbyMusic();
+    
     // Resetear el estado de juego iniciado
     ref.read(gameStartedProvider.notifier).resetGame();
     

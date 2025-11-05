@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers.dart';
+import '../services/audio_service.dart';
 import 'crossword_generator_widget.dart';
 import 'crossword_puzzle_widget.dart';
 import 'puzzle_completed_widget.dart';
@@ -29,12 +30,20 @@ class CrosswordPuzzleApp extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              AudioService().playButtonClick();
+              Navigator.of(context).pop();
+            },
             child: Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () {
+              AudioService().playButtonClick();
               Navigator.of(context).pop();
+              
+              // Volver a música del lobby
+              AudioService().playLobbyMusic();
+              
               // Resetear el juego
               ref.read(gameStartedProvider.notifier).resetGame();
               ref.read(gameScoreNotifierProvider.notifier).resetGame();

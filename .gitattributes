@@ -1,0 +1,18 @@
+# Prevenir que archivos sensibles se suban a Git
+.env filter=git-crypt diff=git-crypt
+.env.* !filter !diff
+
+# Archivos de texto normalizados
+*.dart text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# Archivos binarios
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.apk binary

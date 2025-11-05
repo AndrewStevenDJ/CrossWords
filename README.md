@@ -50,7 +50,19 @@ Si quieres usar la funcionalidad online (puntajes, leaderboard):
 3. Ejecuta el SQL en [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
 4. Copia las credenciales al archivo `.env`
 
-### 5. Ejecuta la aplicación
+### 5. Configura el logo y splash screen (opcional)
+
+```bash
+# Sigue las instrucciones en LOGO_SETUP.md
+# Convierte las plantillas SVG a PNG o crea tu propio diseño
+# Luego ejecuta:
+setup_logo.bat      # Windows
+bash setup_logo.sh  # Linux/Mac
+```
+
+📖 **Guía completa:** Ver [LOGO_SETUP.md](LOGO_SETUP.md)
+
+### 6. Ejecuta la aplicación
 
 ```bash
 flutter run

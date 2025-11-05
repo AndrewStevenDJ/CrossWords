@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'services/supabase_service.dart';
-import 'widgets/crossword_puzzle_app.dart';
+import 'package:generate_crossword/services/supabase_service.dart';
+import 'package:generate_crossword/services/audio_service.dart';
+import 'package:generate_crossword/widgets/crossword_puzzle_app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,15 @@ void main() async {
   } catch (e) {
     print('⚠️ Error inicializando Supabase: $e');
     print('   La aplicación continuará en modo offline');
+  }
+  
+  // Inicializar servicio de audio
+  try {
+    await AudioService().init();
+    print('✓ Sistema de audio inicializado correctamente');
+  } catch (e) {
+    print('⚠️ Advertencia: Error inicializando audio: $e');
+    print('   La aplicación continuará sin sonido');
   }
   
   runApp(

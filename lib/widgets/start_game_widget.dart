@@ -2,12 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers.dart';
+import '../services/audio_service.dart';
 
-class StartGameWidget extends ConsumerWidget {
+class StartGameWidget extends ConsumerStatefulWidget {
   const StartGameWidget({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StartGameWidget> createState() => _StartGameWidgetState();
+}
+
+class _StartGameWidgetState extends ConsumerState<StartGameWidget> {
+  @override
+  void initState() {
+    super.initState();
+    // Reproducir música del lobby cuando se muestra esta pantalla
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AudioService().playLobbyMusic();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
         padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
@@ -47,7 +62,13 @@ class StartGameWidget extends ConsumerWidget {
             // Botón de inicio
             ElevatedButton(
               onPressed: () {
+                // Sonido de clic
+                AudioService().playButtonClick();
+                
                 final selectedCategory = ref.read(selectedCategoryProvider);
+                
+                // Cambiar a música de partida
+                AudioService().playGameMusic();
                 
                 // Iniciar el juego
                 ref.read(gameStartedProvider.notifier).startGame();
